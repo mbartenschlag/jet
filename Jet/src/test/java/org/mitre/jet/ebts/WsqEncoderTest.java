@@ -41,41 +41,32 @@ public class WsqEncoderTest {
 
     private static final Logger log = LoggerFactory.getLogger(WsqEncoderTest.class);
 
-    public static File outputFolder = new File("JET/src/test/resources/test-output/");
+    private void convertToWsq(String sourceImageFile) throws Exception {
+        checkConvertedImage(ImageIO.read(ClassLoader.getSystemResource(sourceImageFile).openStream()));
+    }
 
-    @BeforeClass
-    public static void setup() {
-        if (outputFolder.exists()) {
-            for(File file : outputFolder.listFiles()) {
-                file.delete();
-            }
-        } else {
-            outputFolder.mkdirs();
-        }
+    private void checkConvertedImage(BufferedImage sourceImage) throws Exception {
+        int sourceWidth = sourceImage.getWidth();
+        int sourceHeight = sourceImage.getHeight();
+
+        ByteArrayOutputStream wsqImageDataStream = new ByteArrayOutputStream();
+        ImageIO.write(sourceImage, "WSQ", wsqImageDataStream);
+
+        BufferedImage wsqImage = ImageIO.read(new ByteArrayInputStream(wsqImageDataStream.toByteArray()));
+        int targetWidth = wsqImage.getWidth();
+        int targetHeight = wsqImage.getHeight();
+
+        Assert.assertEquals(sourceWidth, targetWidth);
+        Assert.assertEquals(sourceHeight, targetHeight);
     }
 
     @Test
     public void testBmp500() throws Exception {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.start();
-        ImageIO.setUseCache(false);
-
-        File imageFile = new File(ClassLoader.getSystemResource("sample-gray-500.bmp").toURI());
-
-        BufferedImage bi = ImageIO.read(new ByteArrayInputStream(Files.toByteArray(imageFile)));
-        stopwatch.stop();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(bi, "WSQ", baos);
-        baos.flush();
-        byte[] outputImage = baos.toByteArray();
-        Files.write(outputImage, new File("JET/src/test/resources/test-output/testBmp500-Output.wsq"));
-
+        convertToWsq("sample-gray-500.bmp");
     }
 
     @Test
     public void testBmpNonBiometric() throws Exception {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.start();
         ImageIO.setUseCache(false);
 
         File imageFile = new File(ClassLoader.getSystemResource("image_not_provided.bmp").toURI());
@@ -88,7 +79,6 @@ public class WsqEncoderTest {
         g.drawImage(bi, 0, 0, null);
         g.dispose();
 
-        stopwatch.stop();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         Bitmap bitmap = new Bitmap(
@@ -99,13 +89,12 @@ public class WsqEncoderTest {
                 8, 1);
         WSQEncoder.encode(baos, bitmap, 0.75);
 
-        File outputFile = new File("JET/src/test/resources/test-output/testBmp-Output.wsq");
         byte[] outputImage = baos.toByteArray();
-        Files.write(outputImage, outputFile);
-        Assert.assertNotNull(Files.toByteArray(outputFile));
-
+        Assert.assertNotNull(outputImage);
+        Assert.assertTrue(outputImage.length > 0);
     }
 
+    // TODO: Purpose of this test is unclear. Remove it?
 //    @Test
 //    public void testRawRectangle() throws Exception {
 //
@@ -139,33 +128,13 @@ public class WsqEncoderTest {
         WSQEncoder.encode(baos,bitmap,0.75);
         baos.flush();
         byte[] outputImage = baos.toByteArray();
-
-        File outputFile = new File("JET/src/test/resources/test-output/testRawReference-Output.wsq");
-
-        Files.write(outputImage, outputFile);
-        Assert.assertNotNull(Files.toByteArray(outputFile));
+        Assert.assertNotNull(outputImage);
+        Assert.assertTrue(outputImage.length > 0);
 
     }
 
     @Test
     public void testPng() throws Exception {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.start();
-        ImageIO.setUseCache(false);
-
-
-        File imageFile = new File(ClassLoader.getSystemResource("sample.png").toURI());
-
-        BufferedImage bi = ImageIO.read(new ByteArrayInputStream(Files.toByteArray(imageFile)));
-        stopwatch.stop();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(bi,"wsq",baos);
-        baos.flush();
-        byte[] outputImage = baos.toByteArray();
-
-        File outputFile = new File("JET/src/test/resources/test-output/testPng-Output.wsq");
-        Files.write(outputImage, outputFile);
-        Assert.assertNotNull(Files.toByteArray(outputFile));
-
+        convertToWsq("sample.png");
     }
 }
