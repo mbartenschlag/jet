@@ -17,6 +17,7 @@
 package org.mitre.jet.ebts;
 
 import com.google.common.io.Files;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -32,68 +34,38 @@ import java.net.URISyntaxException;
 import static org.junit.Assert.assertTrue;
 
 /**
-* User: cforter
-*/
+ * User: cforter
+ */
 public class WsqDecoderTest {
 
     private static final Logger log = LoggerFactory.getLogger(WsqDecoderTest.class);
 
-    public static File outputFolder = new File("JET/src/test/resources/test-output/");
-
-    @BeforeClass
-    public static void setup() {
-        if (outputFolder.exists()) {
-            for(File file : outputFolder.listFiles()) {
-                file.delete();
-            }
-        } else {
-            outputFolder.mkdirs();
-        }
-    }
-
     @Test
-    public void decodeWsqImage(){
-        File file = null;
-        File outputFile = null;
-        BufferedImage biWsq = null;
-        BufferedImage biBmp = null;
+    public void decodeWsqImage() throws Exception {
+        File wsqFile = new File(ClassLoader.getSystemResource("a001.wsq").toURI());
 
+        // Use ImageIO to read the input WSQ image.
+        BufferedImage sourceImage = ImageIO.read(wsqFile);
+        Assert.assertNotNull("Failed to read WSQ input image data.", sourceImage);
 
-        try {
-            file = new File(ClassLoader.getSystemResource("a001.wsq").toURI());
+        // Store the height and width of the read image.
+        int sourceWidth = sourceImage.getWidth();
+        int sourceHeight = sourceImage.getHeight();
 
+        // Write the buffered image out as a BMP.
+        ByteArrayOutputStream bmpImageDataStream = new ByteArrayOutputStream();
+        ImageIO.write(sourceImage, "bmp", bmpImageDataStream);
+        bmpImageDataStream.flush();
 
-            if(file != null) {
-                //Decode WSQ Image to Java BufferedImage
-                biWsq = ImageIO.read(file);
-                log.info("Decoded WSQ File from {}", file.getAbsolutePath());
+        // Verify that some amount of image data was written.
+        byte[] bmpImageData = bmpImageDataStream.toByteArray();
+        Assert.assertTrue("Converting WSQ to BMP produced an empty BMP image.", bmpImageData.length > 0);
 
-                //Write WSQ Image to BMP
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(biWsq,"bmp", baos);
-                log.info("Converted Buffered Image to BMP");
-                baos.flush();
-                byte[] imageData = baos.toByteArray();
-                outputFile = new File("JET/src/test/resources/test-output/a001.bmp");
-                Files.write(imageData, outputFile);
-                log.info("Wrote BMP image file to {}", outputFile.getAbsolutePath());
-            }
-            else{
-                log.error("Test WSQ File is NULL");
-            }
+        BufferedImage targetImage = ImageIO.read(new ByteArrayInputStream(bmpImageData));
+        Assert.assertNotNull("Failed to read BMP image that was converted from original WSQ.", targetImage);
 
-            biBmp = ImageIO.read(outputFile);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
-        assertTrue(outputFile.exists());
-        assertTrue(outputFile.length()>0);
-
+        // Compare dimensions
+        Assert.assertEquals(sourceWidth, targetImage.getWidth());
+        Assert.assertEquals(sourceHeight, targetImage.getHeight());
     }
-
-
 }
