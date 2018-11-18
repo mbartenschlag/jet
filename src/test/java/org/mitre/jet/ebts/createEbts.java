@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mitre.createEbts;
+package org.mitre.jet.ebts;
 
 import java.awt.image.BufferedImage;
 import java.io.*;

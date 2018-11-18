@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mitre.printEbts;
+package org.mitre.jet.ebts;
 
 import java.io.IOException;
 import java.io.InputStream;
